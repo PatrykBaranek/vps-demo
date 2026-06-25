@@ -1,0 +1,102 @@
+# VPS Demo App
+
+> A Next.js 16 application showcasing React 19 features, component caching, and authentication with better-auth. Built for deployment on a VPS with standalone output.
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript 5 (strict mode)
+- **UI:** React 19, Tailwind CSS 4, Base UI, shadcn/ui (base-nova style)
+- **Auth:** better-auth (GitHub OAuth + email/password)
+- **Database:** PostgreSQL via pg
+- **ORM:** Drizzle ORM
+- **Validation:** Zod 4
+- **Animations:** Motion (Framer Motion)
+- **Icons:** Lucide React
+- **Package Manager:** pnpm
+
+## Project Structure
+
+```
+app/                          # Next.js App Router pages & layouts
+├── api/auth/[...all]/        # Auth catch-all API route (better-auth)
+├── notifications/            # Notifications page (placeholder)
+├── posts/                    # Posts listing page
+│   └── [id]/                 # Dynamic post detail with 'use cache'
+├── layout.tsx                # Root layout (Geist font, Navbar, BackgroundOrbs)
+├── page.tsx                  # Home page
+└── globals.css               # Global styles, Tailwind theme, glassmorphism
+
+components/                   # Shared React components
+├── ui/                       # shadcn/ui primitives (Button, etc.)
+├── BackgroundOrbs.tsx        # Decorative gradient background
+├── Navbar.tsx                # Fixed glass-morphism navigation bar
+└── SignInButton.tsx          # GitHub OAuth sign-in (client component)
+
+lib/                          # Shared utilities
+├── auth.ts                   # Server-side better-auth config (PostgreSQL, GitHub provider)
+├── auth-client.ts            # Client-side auth client (base URL: localhost:3000)
+└── utils.ts                  # cn() utility (clsx + tailwind-merge)
+```
+
+## Architecture & Conventions
+
+### Next.js Configuration
+- React Compiler enabled (`reactCompiler: true`) — no manual `useMemo`/`useCallback` needed
+- Component caching enabled (`cacheComponents: true`)
+- Standalone output mode for VPS deployment
+- Experimental: `optimizeServerReact`, `cachedNavigations`
+
+### Routing
+- All routes use the App Router (`app/` directory)
+- Dynamic routes use Promise-based params (React 19 pattern): `params: Promise<{ id: string }>`
+- Post detail pages use `'use cache'` directive with `cacheLife('minutes')`
+- Loading states via `loading.tsx` convention
+
+### Authentication
+- Server config in `lib/auth.ts` — uses better-auth with PostgreSQL + GitHub OAuth
+- Client config in `lib/auth-client.ts` — base URL hardcoded to `http://localhost:3000`
+- API handled by catch-all route at `/api/auth/[...all]`
+- Required env vars: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+
+### Environment Variables
+- Standard `.env.local` file (loaded automatically by Next.js)
+- Required: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+
+### Styling
+- Tailwind CSS 4 with PostCSS plugin
+- OKLch color space for theme colors
+- Light and dark mode via CSS media queries and `.dark` class
+- Glass morphism effect (`.glass` class) — backdrop blur + transparency
+- shadcn/ui components use Class Variance Authority for variants
+
+### Components
+- Server Components by default; `'use client'` only when needed (e.g., SignInButton)
+- UI primitives in `components/ui/` follow shadcn/ui patterns with Base UI
+- Shared components in `components/` root
+
+### Database
+- PostgreSQL via `pg` Pool (connection string from `DATABASE_URL`)
+- Drizzle ORM for queries
+- Migrations managed by better-auth
+- Schema: user, session, account, verification tables
+
+## Development
+
+```bash
+pnpm dev        # next dev
+pnpm build      # next build
+```
+
+## Path Aliases
+
+- `@/*` → project root (configured in tsconfig.json)
+
+
+## Linux package manager
+
+On Arch linux Environment use Yay instead of pacman
+
+## PNPM
+
+Don't add folder .pnpm-store inside project directory
