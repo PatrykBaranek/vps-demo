@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { appDb } from '@/lib/app-db';
 import { AIBriefingPanel } from './ai-briefing-panel';
 import { BookmarkButton } from './bookmark-button';
 import { PerArticleSummary } from './per-article-summary';
+import { DotsLoader } from './dots-loader';
 
 type FeedItem = {
   title?: string;
@@ -15,34 +18,23 @@ type FeedItem = {
   source?: string;
 };
 
-type RssSource = {
-  id: string;
-  name: string;
-  url: string;
-};
-
 const CACHE_KEY = 'rss-feed-cache';
-const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
-interface RssFeedClientProps {
-  initialSources: RssSource[];
-}
-
-export function RssFeedClient({ initialSources }: RssFeedClientProps) {
-  const [sources] = useState<RssSource[]>(initialSources);
-  const [selectedSource, setSelectedSource] = useState<string>('all');
+export function RssFeedClient() {
+  const sources = useLiveQuery(() =>
+    appDb.rssSources.filter((s) => s.isActive).sortBy('name'),
+  );
+  const [selectedSource, setSelectedSource] = useState<number | 'all'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Log the sources we received
-  console.log('RssFeedClient initialized with sources:', initialSources);
 
-  // Fetch feeds when source changes or on mount
+  // Fetch feeds once sources are loaded and whenever the selected source changes
   useEffect(() => {
-    fetchFeeds();
-  }, [selectedSource]);
+    if (sources) fetchFeeds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSource, sources]);
 
   // Clear cache on mount to ensure fresh data
   useEffect(() => {
@@ -50,23 +42,24 @@ export function RssFeedClient({ initialSources }: RssFeedClientProps) {
   }, []);
 
   async function fetchFeeds() {
+    if (!sources) return;
+
     setLoading(true);
     setError(null);
 
     try {
-      const sourcesToFetch = selectedSource === 'all' 
-        ? sources 
-        : sources.filter(s => s.id === selectedSource);
+      const sourcesToFetch =
+        selectedSource === 'all'
+          ? sources
+          : sources.filter((s) => s.id === selectedSource);
 
-      const urls = sourcesToFetch.map(s => s.url);
+      const urls = sourcesToFetch.map((s) => s.url);
 
       if (urls.length === 0) {
         setFeedItems([]);
         setLoading(false);
         return;
       }
-
-      console.log('Fetching RSS from URLs:', urls);
 
       const response = await fetch('/api/rss-fetch', {
         method: 'POST',
@@ -79,13 +72,11 @@ export function RssFeedClient({ initialSources }: RssFeedClientProps) {
       }
 
       const data = await response.json();
-      
+
       if (!data.items || !Array.isArray(data.items)) {
         throw new Error('Invalid response format from RSS API');
       }
-      
-      console.log('Received items:', data.items.length);
-      
+
       setFeedItems(data.items);
     } catch (err: any) {
       console.error('Failed to fetch feeds:', err);
@@ -98,19 +89,25 @@ export function RssFeedClient({ initialSources }: RssFeedClientProps) {
   // Get unique categories
   const categories = useMemo(() => {
     const cats = new Set<string>();
-    feedItems.forEach(item => {
-      item.categories?.forEach(cat => cats.add(cat));
+    feedItems.forEach((item) => {
+      item.categories?.forEach((cat) => cats.add(cat));
     });
     return Array.from(cats).sort();
   }, [feedItems]);
 
   // Filter items
   const filteredItems = useMemo(() => {
-    return feedItems.filter(item => {
-      if (selectedSource !== 'all' && item.source !== sources.find(s => s.id === selectedSource)?.name) {
+    return feedItems.filter((item) => {
+      if (
+        selectedSource !== 'all' &&
+        item.source !== sources?.find((s) => s.id === selectedSource)?.name
+      ) {
         return false;
       }
-      if (selectedCategory !== 'all' && !item.categories?.includes(selectedCategory)) {
+      if (
+        selectedCategory !== 'all' &&
+        !item.categories?.includes(selectedCategory)
+      ) {
         return false;
       }
       return true;
@@ -126,24 +123,15 @@ export function RssFeedClient({ initialSources }: RssFeedClientProps) {
     }).format(new Date(isoDate));
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex items-center gap-1.5 text-gray-600 text-sm">
-          <span>Loading feeds</span>
-          <span className="animate-bounce [animation-delay:0ms]">.</span>
-          <span className="animate-bounce [animation-delay:150ms]">.</span>
-          <span className="animate-bounce [animation-delay:300ms]">.</span>
-        </div>
-      </div>
-    );
+  if (sources === undefined || loading) {
+    return <DotsLoader />;
   }
 
   if (error) {
     return (
       <div className="text-red-400 text-center py-8">
         Error: {error}
-        <button 
+        <button
           onClick={fetchFeeds}
           className="ml-4 text-blue-400 hover:underline"
         >
@@ -158,8 +146,9 @@ export function RssFeedClient({ initialSources }: RssFeedClientProps) {
       <section className="max-w-6xl mx-auto pb-24">
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-4 mb-6">
-          <h1 className="text-base font-semibold text-white">Latest Articles</h1>
-          
+          <h1 className="text-base font-semibold text-white">
+            Latest Articles
+          </h1>
           {/* Source Filter */}
           <div className="flex gap-2">
             <button
@@ -172,7 +161,7 @@ export function RssFeedClient({ initialSources }: RssFeedClientProps) {
             >
               All Sources
             </button>
-            {sources.map(source => (
+            {sources.map((source) => (
               <button
                 key={source.id}
                 onClick={() => setSelectedSource(source.id)}
@@ -195,8 +184,10 @@ export function RssFeedClient({ initialSources }: RssFeedClientProps) {
               className="px-3 py-1 rounded-full text-xs bg-white/10 text-gray-400 border border-white/10 focus:outline-none focus:border-white/30"
             >
               <option value="all">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
           )}
@@ -210,7 +201,10 @@ export function RssFeedClient({ initialSources }: RssFeedClientProps) {
         <div className="rounded-3xl border border-white/10 overflow-hidden bg-black">
           <ul className="divide-y divide-white/5">
             {filteredItems.map((item) => (
-              <li key={item.link} className="group px-5 py-4 hover:bg-white/[0.03] transition-colors">
+              <li
+                key={item.link}
+                className="group px-5 py-4 hover:bg-white/[0.03] transition-colors"
+              >
                 <div className="flex-1 min-w-0">
                   {item.categories?.[0] && (
                     <span className="inline-block text-[10px] font-medium uppercase tracking-wider text-gray-600 mb-1.5">
@@ -227,8 +221,8 @@ export function RssFeedClient({ initialSources }: RssFeedClientProps) {
                       {item.title}
                     </a>
                     <div className="flex gap-2 shrink-0">
-                      <BookmarkButton 
-                        articleLink={item.link || ''} 
+                      <BookmarkButton
+                        articleLink={item.link || ''}
                         articleTitle={item.title || ''}
                         articleSource={item.source || ''}
                       />

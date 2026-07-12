@@ -5,19 +5,6 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   cacheComponents: true,
   output: "standalone",
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "avatars.githubusercontent.com",
-      },
-      {
-        protocol: "https",
-        hostname: "api.dicebear.com",
-      },
-    ],
-    dangerouslyAllowSVG: true,
-  },
   experimental: {
     sri: {
       algorithm: 'sha256',

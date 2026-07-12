@@ -9,10 +9,6 @@ ARG NODE_VERSION=24.13.0-slim
 
 FROM node:${NODE_VERSION} AS base
 
-RUN apt-get update \
- && apt-get install -y --no-install-recommends openssl \
- && rm -rf /var/lib/apt/lists/*
-
 FROM base AS dependencies
 
 # Set working directory
@@ -63,11 +59,11 @@ ENV NODE_ENV=production
 # .next/cache/fetch-cache from being included in the final image, meaning
 # cached fetch responses from the build won't be available at runtime.
 RUN if [ -f package-lock.json ]; then \
-    if [ -f prisma/schema.prisma ]; then npx prisma generate; fi && npm run build; \
+    npm run build; \
   elif [ -f yarn.lock ]; then \
-    corepack enable yarn && if [ -f prisma/schema.prisma ]; then yarn prisma generate; fi && yarn build; \
+    corepack enable yarn && yarn build; \
   elif [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && if [ -f prisma/schema.prisma ]; then pnpm prisma generate; fi && pnpm build; \
+    corepack enable pnpm && pnpm build; \
   else \
     echo "No lockfile found." && exit 1; \
   fi

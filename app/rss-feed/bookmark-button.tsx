@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
-import { authClient } from '@/lib/auth-client';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { appDb } from '@/lib/app-db';
 
 interface BookmarkButtonProps {
   articleLink: string;
@@ -11,44 +11,32 @@ interface BookmarkButtonProps {
 }
 
 export function BookmarkButton({ articleLink, articleTitle, articleSource }: BookmarkButtonProps) {
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { data: session } = authClient.useSession();
+  const bookmark = useLiveQuery(
+    () => appDb.bookmarks.where('articleLink').equals(articleLink).first(),
+    [articleLink],
+  );
+  const isBookmarked = !!bookmark;
 
   const toggleBookmark = async () => {
-    if (!session?.user) {
-      alert('Please sign in to bookmark articles');
-      return;
-    }
-
-    setLoading(true);
     try {
-      if (isBookmarked) {
-        await fetch('/api/bookmarks', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ articleLink }),
-        });
-        setIsBookmarked(false);
+      if (bookmark) {
+        await appDb.bookmarks.delete(bookmark.id);
       } else {
-        await fetch('/api/bookmarks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ articleLink, articleTitle, articleSource }),
+        await appDb.bookmarks.add({
+          articleLink,
+          articleTitle,
+          articleSource,
+          createdAt: Date.now(),
         });
-        setIsBookmarked(true);
       }
     } catch (error) {
       console.error('Failed to toggle bookmark:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <button
       onClick={toggleBookmark}
-      disabled={loading}
       className="p-1 rounded hover:bg-white/10 transition-colors"
       title={isBookmarked ? 'Remove bookmark' : 'Bookmark article'}
     >

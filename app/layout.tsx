@@ -1,7 +1,7 @@
 import React from 'react';
 
-import Navbar from '../components/Navbar';
-import { GoogleAdsense } from "@/components/GoogleAdsense";
+import { GoogleTagManager } from '@next/third-parties/google';
+import Navbar from '@/components/Navbar';
 
 import { Geist } from 'next/font/google';
 import { cn } from '@/lib/utils';
@@ -26,10 +26,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<RootLayoutProps>) {
   return (
     <html lang="en" className={cn('font-sans', geist.variable)}>
+      <GoogleTagManager gtmId={process.env.GTM_CONTAINER_ID!} />
       <body className="min-h-full flex flex-col items-center p-8 grid-bg">
         <Navbar />
         <main className="app-shell mt-20">{children}</main>
-        <GoogleAdsense />
       </body>
     </html>
   );

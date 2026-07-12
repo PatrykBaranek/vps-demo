@@ -1,12 +1,9 @@
-import { Suspense } from "react";
-import { SignInButton } from "@/components/SignInButton";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import Link from "next/link";
 
 import Dither from '@/components/Dither';
 import { AdSlot } from "@/components/AdSlot";
 
-export default async function Home() {
+export default function Home() {
   return (
     <>
       <section className="flex flex-col glass text-center p-6 gap-6">
@@ -23,31 +20,15 @@ export default async function Home() {
         </div>
 
         <h1 className="text-3xl">Cache Components showcase</h1>
-        <Suspense fallback={<div className="spin-in">Loading...</div>}>
-          <SessionSection />
-        </Suspense>
+        <p className="text-muted-foreground">
+          A local-first Next.js demo. Data lives in your browser via Dexie
+          (IndexedDB) — no sign-in, no server database. Explore the{' '}
+          <Link href="/posts" className="underline underline-offset-2">posts</Link>,{' '}
+          <Link href="/rss-feed" className="underline underline-offset-2">RSS feed</Link>, and{' '}
+          <Link href="/dexie-showcase" className="underline underline-offset-2">Dexie showcase</Link>.
+        </p>
       </section>
       <AdSlot slot="0000000000" />
     </>
-  );
-}
-
-async function SessionSection() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (session) {
-    return (
-      <div className="w-full h-full bg-black rounded-3xl p-4">
-        <code className="text-left">
-          <pre>{JSON.stringify(session, null, 2)}</pre>
-        </code>
-      </div>
-    );
-  }
-
-  return (
-    <SignInButton />
   );
 }

@@ -1,8 +1,4 @@
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Suspense } from 'react';
 import LinkButton from './LinkButton';
 
 const links = [
@@ -15,9 +11,9 @@ const links = [
   { href: '/dexie-showcase', label: 'Dexie' },
 ];
 
-export default async function Navbar() {
+export default function Navbar() {
   return (
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-3xl px-4">
+    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-4">
       <nav className="glass flex items-center justify-between px-5 py-3">
         <Link href="/" className="flex items-center gap-2 group">
           <span className="size-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-md shadow-indigo-500/30 group-hover:shadow-indigo-500/50 transition-shadow">
@@ -34,30 +30,7 @@ export default async function Navbar() {
             </li>
           ))}
         </ul>
-        <Suspense fallback="TUDUM">
-          <Avatar />
-        </Suspense>
       </nav>
     </header>
-  );
-}
-
-async function Avatar() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  return (
-    <Image
-      className="rounded-4xl"
-      height={30}
-      width={30}
-      src={
-        session?.user?.image ??
-        'https://api.dicebear.com/7.x/avataaars/svg?seed=default'
-      }
-      loading="eager"
-      alt="User avatar"
-    />
   );
 }
