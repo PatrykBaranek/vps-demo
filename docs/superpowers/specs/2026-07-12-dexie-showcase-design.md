@@ -32,12 +32,3 @@ The route will use its own scoped CSS module so the showcase can have a delibera
 ## Error handling
 
 Database actions are wrapped in small async handlers. A compact inline status message reports failures such as an unavailable IndexedDB context. Destructive actions use an explicit delete button and the notes editor clears its selection safely after deletion. The UI remains usable while a live query is loading.
-
-## Validation
-
-- Run the project typecheck/build command available in the repository.
-- Start the Next.js dev server and inspect `/dexie-showcase` in the browser.
-- Exercise create/update/delete flows in all three tabs.
-- Reload the page to verify persistence and confirm the “local” status remains meaningful.
-- Verify the responsive layout and keyboard focus states at a narrow viewport.
-
