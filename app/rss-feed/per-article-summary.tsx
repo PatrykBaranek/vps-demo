@@ -55,7 +55,8 @@ export function PerArticleSummary({ item }: PerArticleSummaryProps) {
   return (
     <>
       <button
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
           setIsOpen(!isOpen);
           if (!isOpen && !summary) fetchSummary();
         }}
@@ -71,7 +72,10 @@ export function PerArticleSummary({ item }: PerArticleSummaryProps) {
             <div className="flex items-center justify-between p-4 border-b border-white/10">
               <h3 className="text-sm font-semibold text-white">AI Summary</h3>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(false);
+                }}
                 className="text-gray-400 hover:text-white"
               >
                 ✕

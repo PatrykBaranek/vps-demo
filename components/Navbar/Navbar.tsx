@@ -5,9 +5,6 @@ const links = [
   { href: '/', label: 'Home' },
   { href: '/posts', label: 'Posts' },
   { href: '/rss-feed', label: 'RSS Feed' },
-  { href: '/tanstack-ai', label: 'Tanstack AI' },
-  { href: '/web-api', label: 'Web API' },
-  { href: '/terminal-gui', label: 'TerminalGUI' },
   { href: '/dexie-showcase', label: 'Dexie' },
 ];
 

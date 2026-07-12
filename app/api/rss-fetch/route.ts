@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
           title: item.title,
           link: item.link,
           contentSnippet: item.contentSnippet || item.description,
+          content: item.content || null,
           creator: item.creator || item.author,
           isoDate: item.isoDate || item.pubDate,
           categories: item.categories,

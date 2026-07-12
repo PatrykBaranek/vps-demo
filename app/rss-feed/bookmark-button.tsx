@@ -17,7 +17,8 @@ export function BookmarkButton({ articleLink, articleTitle, articleSource }: Boo
   );
   const isBookmarked = !!bookmark;
 
-  const toggleBookmark = async () => {
+  const toggleBookmark = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     try {
       if (bookmark) {
         await appDb.bookmarks.delete(bookmark.id);
