@@ -1,4 +1,4 @@
-import { RssFeedClient } from './rss-feed-client';
+import { RssFeedClient } from './components/rss-feed-client';
 
 export const metadata = {
   title: 'RSS Feed',
