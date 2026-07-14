@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { GoogleTagManager } from '@next/third-parties/google';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/navbar';
 
 import { Geist } from 'next/font/google';
 import { cn } from '@/lib/utils';

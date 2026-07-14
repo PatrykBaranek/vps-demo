@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import LinkButton from './LinkButton';
+import LinkButton from './link-button';
 
 const links = [
   { href: '/', label: 'Home' },

@@ -1,6 +1,9 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working in this repository.
+> This project's canonical agent guidance is in **`AGENTS.md`** (used by opencode).
+> The content below is mirrored here for Claude Code compatibility.
+
+This file provides guidance to AI agents when working in this repository.
 
 ## Project overview
 
@@ -23,6 +26,24 @@ the browser (IndexedDB) — there is no server database and no authentication.
   event; reactive reads use `useLiveQuery` from `dexie-react-hooks`.
 - **AI**: Vercel AI SDK (`ai`), `@tanstack/ai`, OpenRouter provider
 - **Package manager**: pnpm
+
+## File naming conventions
+
+- **Directories**: kebab-case (e.g., `app/rss-feed/`, `app/dexie-showcase/`)
+- **Source files (.ts/.tsx)**: kebab-case (e.g., `rss-feed-client.tsx`, `app-db.ts`)
+- **Component function names**: PascalCase (e.g., `RssFeedClient`, `ArticleDrawer`)
+- **shadcn/ui primitives**: lowercase files in `components/ui/` (e.g., `button.tsx`)
+- **Next.js special files**: lowercase (e.g., `page.tsx`, `layout.tsx`, `route.ts`, `loading.tsx`)
+- **Barrel files**: `index.ts` in the component directory
+
+## Component patterns
+
+- Feature pages use a **server `page.tsx`** + co-located **client component** named `{feature}-client.tsx`:
+  - `app/posts/page.tsx` + `app/posts/posts-client.tsx`
+  - `app/dexie-showcase/page.tsx` + `app/dexie-showcase/dexie-showcase-client.tsx`
+  - `app/rss-feed/page.tsx` + `app/rss-feed/components/rss-feed-client.tsx`
+- Place `'use client'` only on components that need browser APIs (hooks, events, state)
+- Shared components go in `components/`; feature-specific components stay co-located
 
 ## Common commands
 
@@ -49,8 +70,15 @@ There is no configured lint or test script — do not assume `pnpm lint` or
   OpenRouter key; `rss-fetch` proxies external RSS URLs).
 - `components/` — Shared components; `components/ui/` is shadcn-managed
   (add new primitives via the shadcn CLI, not by hand-authoring).
-- `lib/` — Client/server singletons: `dexie-db.ts` (showcase DB) and
-  `app-db.ts` (app data DB), `ads.ts`, `utils.ts`.
+- `components/navbar/` — Navigation bar (barrel export via `index.ts`)
+- `lib/` — Client/server singletons: `dexie-db.ts`, `app-db.ts`, `utils.ts`.
+
+## Data layer
+
+- All app data lives in IndexedDB via Dexie.js
+- Reactive reads use `useLiveQuery` from `dexie-react-hooks`
+- App data is seeded once via Dexie's `on('populate')` event
+- No server database or authentication
 
 ## Environment variables
 
