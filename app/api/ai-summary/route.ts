@@ -1,5 +1,6 @@
 import { streamText } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { encode } from 'gpt-tokenizer';
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -15,15 +16,30 @@ const languageInstructions: Record<string, string> = {
   de: 'Write the summary in German (Deutsch).',
 };
 
+const MAX_INPUT_TOKENS = 2048;
+const SYSTEM_OVERHEAD = 256;
+
 export async function POST(req: Request) {
   const { items, language } = await req.json() as {
     items: Array<{ title?: string; contentSnippet?: string }>;
     language?: string;
   };
 
-  const prompt = items
-    .map((it) => `Title: ${it.title}\n${it.contentSnippet ? `${it.contentSnippet}\n` : ''}`)
-    .join('\n\n');
+  // Token-aware truncation: items are already sorted newest-first from the RSS fetch,
+  // so iterating in-order naturally keeps the most recent articles.
+  const itemTexts: string[] = [];
+  let totalTokens = 0;
+  const budget = MAX_INPUT_TOKENS - SYSTEM_OVERHEAD;
+
+  for (const it of items) {
+    const text = `Title: ${it.title}\n${it.contentSnippet ? `${it.contentSnippet}\n` : ''}`;
+    const tokens = encode(text).length;
+    if (totalTokens + tokens > budget && itemTexts.length > 0) break;
+    itemTexts.push(text);
+    totalTokens += tokens;
+  }
+
+  const prompt = itemTexts.join('\n\n');
 
   const langInstruction = languageInstructions[language ?? 'pl'] ?? languageInstructions.pl;
 
