@@ -45,7 +45,7 @@ export function ArticleDrawer({ article, onClose }: Readonly<ArticleDrawerProps>
     >
       <SheetContent
         side="right"
-        className="flex flex-col gap-0 p-0 sm:max-w-5xl"
+        className="flex flex-col gap-0 p-0 sm:max-w-[90vw] lg:max-w-7xl"
       >
         {/* Mini header bar */}
         <SheetHeader className="border-b px-5 py-4 shrink-0">
@@ -59,7 +59,7 @@ export function ArticleDrawer({ article, onClose }: Readonly<ArticleDrawerProps>
 
         {/* Content body */}
         <div className="flex-1 overflow-y-auto p-6">
-          <h2 className="text-xl font-bold text-foreground leading-snug mb-4">
+          <h2 className="text-2xl font-bold text-foreground leading-snug mb-4">
             {article?.title}
           </h2>
 
@@ -84,11 +84,11 @@ export function ArticleDrawer({ article, onClose }: Readonly<ArticleDrawerProps>
             <div className="mb-8">
               {hasHtmlContent ? (
                 <div
-                  className="article-content text-sm leading-relaxed"
+                  className="article-content text-base leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: article.content! }}
                 />
               ) : (
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-line">
                   {displayContent}
                 </p>
               )}

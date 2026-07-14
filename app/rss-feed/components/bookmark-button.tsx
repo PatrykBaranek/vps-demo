@@ -42,7 +42,7 @@ export function BookmarkButton({ articleLink, articleTitle, articleSource }: Boo
       title={isBookmarked ? 'Remove bookmark' : 'Bookmark article'}
     >
       {isBookmarked ? (
-        <BookmarkCheck className="w-4 h-4 text-yellow-500" />
+        <BookmarkCheck className="w-4 h-4 text-[#ff2d95] drop-shadow-[0_0_4px_#ff2d95]" />
       ) : (
         <Bookmark className="w-4 h-4 text-gray-500 hover:text-gray-300" />
       )}

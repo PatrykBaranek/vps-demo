@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageSquareText } from 'lucide-react';
+import { MessageSquareText, X } from 'lucide-react';
 
 interface PerArticleSummaryProps {
   item: {
@@ -68,17 +68,17 @@ export function PerArticleSummary({ item }: PerArticleSummaryProps) {
 
       {isOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-2xl border border-white/10 max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-white/10">
-              <h3 className="text-sm font-semibold text-white">AI Summary</h3>
+          <div className="bg-[#0a0e17]/95 rounded-2xl border border-[#00f5ff]/20 max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-[#00f5ff]/10">
+              <h3 className="text-sm font-bold text-[#00f5ff] tracking-wider" style={{ textShadow: '0 0 7px #00f5ff' }}>AI SUMMARY</h3>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsOpen(false);
                 }}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-white transition-colors"
               >
-                ✕
+                <X className="size-4" />
               </button>
             </div>
             <div className="p-4 overflow-y-auto">
