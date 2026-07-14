@@ -15,7 +15,8 @@ the browser (IndexedDB) — there is no server database and no authentication.
 - **Framework**: Next.js 16 (App Router, React 19, React Compiler enabled,
   `cacheComponents: true`, `output: "standalone"`)
 - **Language**: TypeScript (strict mode)
-- **Styling**: Tailwind CSS v4, shadcn/ui (`components/ui`), style "base-nova"
+- **Styling**: Tailwind CSS v4, shadcn/ui (`components/ui`), style "base-nova".
+  Custom CRT/terminal keyframes and `neon-*` utilities in `app/globals.css`.
 - **Data**: Dexie.js (IndexedDB, client-side only). Two databases:
   `lib/dexie-db.ts` (`DexieShowcaseDatabase` — tasks/contacts/notes for the
   Dexie showcase) and `lib/app-db.ts` (`VpsDemoAppDatabase` — posts, RSS

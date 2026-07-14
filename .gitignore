@@ -44,6 +44,9 @@ trace.json
 # Claude Code
 .claude
 
+# Opencode
+.opencode
+
 # JetBrains
 .idea
 
