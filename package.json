@@ -8,12 +8,13 @@
     "build": "next build",
     "start": "next start",
     "start:standalone": "cp .env .next/standalone/ && node .next/standalone/server.js --inspect",
-    "typecheck": "tsc --noEmit ."
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@next/third-parties": "^16.3.3",
     "@openrouter/ai-sdk-provider": "^3.0.0",
+    "@sentry/nextjs": "^10.72.0",
     "ai": "^7.0.85",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

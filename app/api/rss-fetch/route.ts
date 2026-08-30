@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import Parser from 'rss-parser';
 
 const parser = new Parser();
@@ -44,6 +45,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ items: allItems });
   } catch (error) {
     console.error('Failed to fetch RSS feeds:', error);
+    Sentry.captureException(error, {
+      tags: { route: '/api/rss-fetch', method: 'POST' },
+    });
     return NextResponse.json({ error: 'Failed to fetch RSS feeds' }, { status: 500 });
   }
 }

@@ -16,6 +16,25 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Sentry
+
+Sentry is configured for browser, Node.js, and Edge runtimes with error monitoring and
+performance tracing. Set the following values in `.env`:
+
+```dotenv
+NEXT_PUBLIC_SENTRY_DSN=your-public-dsn
+SENTRY_DSN=your-public-dsn
+```
+
+`NEXT_PUBLIC_SENTRY_DSN` must be available when `next build` runs because Next.js embeds
+public environment variables into the browser bundle. The Docker Compose build forwards
+this value automatically. `SENTRY_DSN` is used by the server and Edge runtimes, with the
+public DSN as a fallback.
+
+For readable production stack traces, provide `SENTRY_ORG`, `SENTRY_PROJECT`, and
+`SENTRY_AUTH_TOKEN` during the production build to upload source maps. Source-map upload
+is disabled automatically when `SENTRY_AUTH_TOKEN` is not set.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

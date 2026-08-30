@@ -47,6 +47,11 @@ COPY . .
 
 ENV NODE_ENV=production
 
+# NEXT_PUBLIC_* values are embedded in the browser bundle during `next build`.
+# The Sentry DSN is public, so passing it as a build argument is safe.
+ARG NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
