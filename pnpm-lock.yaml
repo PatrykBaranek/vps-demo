@@ -5769,7 +5769,7 @@ snapshots:
 
   webpack@5.110.1(lightningcss@1.32.0)(postcss@8.5.23):
     dependencies:
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       '@types/json-schema': 7.0.15
       '@webassemblyjs/ast': 1.14.1
       '@webassemblyjs/wasm-edit': 1.14.1
@@ -5785,7 +5785,7 @@ snapshots:
       minimizer-webpack-plugin: 5.8.0(lightningcss@1.32.0)(postcss@8.5.23)(webpack@5.110.1(lightningcss@1.32.0)(postcss@8.5.23))
       neo-async: 2.6.2
       schema-utils: 4.3.3
-      tapable: 2.3.2
+      tapable: 2.3.3
       watchpack: 2.5.2
       webpack-sources: 3.5.1
     transitivePeerDependencies:
