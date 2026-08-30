@@ -1,5 +1,8 @@
 import Link from 'next/link';
+import { DatabaseIcon } from 'lucide-react';
+
 import LinkButton from './link-button';
+import { buttonVariants } from '@/components/ui/button';
 
 const links = [
   { href: '/', label: 'Home' },
@@ -10,17 +13,13 @@ const links = [
 
 export default function Navbar() {
   return (
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-4">
-      <nav className="glass flex items-center justify-between px-5 py-3">
-        <Link href="/" className="flex items-center gap-2 group">
-          <span className="size-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-md shadow-indigo-500/30 group-hover:shadow-indigo-500/50 transition-shadow">
-            V
-          </span>
-          <span className="text-sm font-semibold tracking-tight bg-linear-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
-            vps-demo
-          </span>
+    <header className="fixed inset-x-0 top-0 z-40 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
+      <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="/" className={buttonVariants({ variant: 'ghost' })}>
+          <DatabaseIcon data-icon="inline-start" />
+          vps-demo
         </Link>
-        <ul className="flex items-center gap-1">
+        <ul className="flex items-center gap-1 overflow-x-auto">
           {links.map(({ href, label }) => (
             <li key={href}>
               <LinkButton href={href} label={label} />

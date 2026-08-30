@@ -7,8 +7,8 @@ export const metadata = {
 export default function PostsPage() {
   return (
     <section>
-      <div className="mb-8">
-        <p className="text-muted-foreground text-sm uppercase tracking-widest mb-1">
+      <div className="mb-8 flex flex-col gap-1">
+        <p className="text-sm text-muted-foreground">
           Browse
         </p>
         <h1 className="text-4xl font-semibold tracking-tight">Posts</h1>

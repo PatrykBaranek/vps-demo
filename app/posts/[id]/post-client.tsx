@@ -2,6 +2,10 @@
 
 import { notFound } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { appDb } from '@/lib/app-db';
 
 export function PostContent({ postId }: Readonly<{ postId: number }>) {
@@ -11,7 +15,7 @@ export function PostContent({ postId }: Readonly<{ postId: number }>) {
   );
 
   if (post === undefined) {
-    return <div className="glass p-6">Loading post...</div>;
+    return <Skeleton className="h-72 w-full" />;
   }
 
   if (post === null) {
@@ -23,15 +27,16 @@ export function PostContent({ postId }: Readonly<{ postId: number }>) {
   }).format(post.createdAt);
 
   return (
-    <article className="glass space-y-4 p-6">
-      <p className="text-muted-foreground text-sm uppercase tracking-widest">
-        Published {publishedAt}
-      </p>
-      <h1 className="text-4xl font-semibold tracking-tight">{post.title}</h1>
-      <p className="text-lg text-muted-foreground">{post.excerpt}</p>
-      <div className="prose prose-invert max-w-none">
-        <p>{post.content}</p>
-      </div>
+    <article>
+      <Card>
+        <CardHeader>
+          <Badge variant="outline">Published {publishedAt}</Badge>
+          <CardTitle><h1 className="text-4xl">{post.title}</h1></CardTitle>
+          <CardDescription>{post.excerpt}</CardDescription>
+        </CardHeader>
+        <Separator />
+        <CardContent className="leading-7"><p>{post.content}</p></CardContent>
+      </Card>
     </article>
   );
 }

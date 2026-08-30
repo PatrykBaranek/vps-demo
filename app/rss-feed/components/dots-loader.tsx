@@ -1,35 +1,24 @@
 'use client';
 
+import { RssIcon } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
+
 export function DotsLoader() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] gap-6">
-      {/* Scan line decoration */}
-      <div className="flex gap-1">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <span
-            key={i}
-            className="w-2 h-2 rounded-full bg-[#00f5ff] animate-pulse"
-            style={{ animationDelay: `${i * 200}ms`, opacity: 0.3 + i * 0.15 }}
-          />
-        ))}
-      </div>
-      <div className="flex flex-col items-center gap-2">
-        <span className="text-[#00f5ff] text-xs font-bold tracking-[0.3em] uppercase">
-          CONNECTING
-        </span>
-        <div className="w-48 h-[2px] bg-white/5 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[#00f5ff] rounded-full"
-            style={{
-              animation: 'progress-fill 2s ease-in-out infinite',
-              boxShadow: '0 0 8px #00f5ff',
-            }}
-          />
-        </div>
-        <span className="text-white/20 text-[10px] tracking-[0.2em] uppercase mt-1">
-          Establishing local link
-        </span>
-      </div>
+    <div className="flex min-h-96 items-center justify-center">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><RssIcon /><span>Loading feed</span></CardTitle>
+          <CardDescription>Connecting to the configured RSS sources.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground"><Spinner />Fetching the latest articles…</div>
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-4/5" />
+        </CardContent>
+      </Card>
     </div>
   );
 }

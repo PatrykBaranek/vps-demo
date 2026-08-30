@@ -25,10 +25,18 @@ export interface Bookmark {
   createdAt: number;
 }
 
+export interface AiSummary {
+  id?: number;
+  cacheKey: string;
+  summary: string;
+  createdAt: number;
+}
+
 const appDb = new Dexie('VpsDemoAppDatabase') as Dexie & {
   posts: EntityTable<Post, 'id'>;
   rssSources: EntityTable<RssSource, 'id'>;
   bookmarks: EntityTable<Bookmark, 'id'>;
+  aiSummaries: EntityTable<AiSummary, 'id'>;
 };
 
 // Note: booleans (published / isActive) are intentionally NOT indexed —
@@ -37,6 +45,10 @@ appDb.version(1).stores({
   posts: '++id, createdAt',
   rssSources: '++id, name, &url',
   bookmarks: '++id, &articleLink, createdAt',
+});
+
+appDb.version(2).stores({
+  aiSummaries: '++id, &cacheKey, createdAt',
 });
 
 const postSeeds: Omit<Post, 'id'>[] = [

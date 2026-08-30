@@ -2,6 +2,7 @@
 
 import { sendGTMEvent } from '@next/third-parties/google';
 import Link from 'next/link';
+import { buttonVariants } from '@/components/ui/button';
 
 interface LinkButtonProps {
   href: string;
@@ -12,7 +13,7 @@ export default function LinkButton({ href, label }: Readonly<LinkButtonProps>) {
   return (
     <Link
       href={href}
-      className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-white/10"
+      className={buttonVariants({ variant: 'ghost', size: 'sm' })}
       onClick={() => {
         return sendGTMEvent({ event: 'buttonClicked', value: { href, label } });
       }}

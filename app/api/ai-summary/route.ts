@@ -1,4 +1,4 @@
-import { streamText } from 'ai';
+import { streamText, createTextStreamResponse, toTextStream } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { encode } from 'gpt-tokenizer';
 
@@ -43,8 +43,8 @@ export async function POST(req: Request) {
 
   const langInstruction = languageInstructions[language ?? 'pl'] ?? languageInstructions.pl;
 
-  const result = streamText({
-    model: openrouter.chat('tencent/hy3:free'),
+  const response = streamText({
+    model: openrouter.chat('openrouter/free'),
     system: [
       'You are a professional news editor.',
       'Summarize the provided RSS feed articles into a concise briefing grouped by theme.',
@@ -57,5 +57,10 @@ export async function POST(req: Request) {
     prompt,
   });
 
-  return result.toTextStreamResponse();
+  return createTextStreamResponse({
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+    },
+    stream: toTextStream({ stream: response.stream }),
+  });
 }

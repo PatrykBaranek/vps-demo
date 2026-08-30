@@ -27,9 +27,9 @@ export default function RootLayout({ children }: Readonly<RootLayoutProps>) {
   return (
     <html lang="en" className={cn('font-sans', geist.variable)}>
       <GoogleTagManager gtmId={process.env.GTM_CONTAINER_ID!} />
-      <body className="min-h-full flex flex-col items-center p-8 grid-bg">
+      <body className="grid-bg min-h-dvh bg-background text-foreground">
         <Navbar />
-        <main className="app-shell mt-20">{children}</main>
+        <main className="app-shell">{children}</main>
       </body>
     </html>
   );

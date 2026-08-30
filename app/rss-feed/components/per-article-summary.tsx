@@ -1,7 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageSquareText, X } from 'lucide-react';
+import { MessageSquareTextIcon } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Spinner } from '@/components/ui/spinner';
+import { appDb } from '@/lib/app-db';
+import { AIResponse } from './ai-response';
 
 interface PerArticleSummaryProps {
   item: {
@@ -9,9 +22,10 @@ interface PerArticleSummaryProps {
     contentSnippet?: string;
     link?: string;
   };
+  language: 'en' | 'pl' | 'de';
 }
 
-export function PerArticleSummary({ item }: PerArticleSummaryProps) {
+export function PerArticleSummary({ item, language }: PerArticleSummaryProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [summary, setSummary] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,19 +33,27 @@ export function PerArticleSummary({ item }: PerArticleSummaryProps) {
 
   const fetchSummary = async () => {
     if (summary || loading) return;
-    
+
+    const cacheKey = `article_${language}_${item.link ?? item.title ?? ''}`;
+    const cached = await appDb.aiSummaries.where('cacheKey').equals(cacheKey).first();
+    if (cached && Date.now() - cached.createdAt < 86400000) {
+      setSummary(cached.summary);
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch('/api/ai-summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           items: [{
             title: item.title,
             contentSnippet: item.contentSnippet,
-          }]
+          }],
+          language,
         }),
       });
 
@@ -39,14 +61,19 @@ export function PerArticleSummary({ item }: PerArticleSummaryProps) {
 
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
-      
+      let fullSummary = '';
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        setSummary(prev => prev + decoder.decode(value));
+        const chunk = decoder.decode(value);
+        fullSummary += chunk;
+        setSummary(prev => prev + chunk);
       }
-    } catch (err: any) {
-      setError(err.message);
+
+      await appDb.aiSummaries.put({ cacheKey, summary: fullSummary, createdAt: Date.now() });
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to fetch summary');
     } finally {
       setLoading(false);
     }
@@ -54,50 +81,33 @@ export function PerArticleSummary({ item }: PerArticleSummaryProps) {
 
   return (
     <>
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
         onClick={(e) => {
           e.stopPropagation();
-          setIsOpen(!isOpen);
-          if (!isOpen && !summary) fetchSummary();
+          setIsOpen(true);
+          if (!summary) void fetchSummary();
         }}
-        className="p-1 rounded hover:bg-white/10 transition-colors"
-        title="Get AI summary"
+        aria-label="Get AI summary"
       >
-        <MessageSquareText className="w-4 h-4 text-gray-500 hover:text-gray-300" />
-      </button>
+        <MessageSquareTextIcon />
+      </Button>
 
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0a0e17]/95 rounded-2xl border border-[#00f5ff]/20 max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-[#00f5ff]/10">
-              <h3 className="text-sm font-bold text-[#00f5ff] tracking-wider" style={{ textShadow: '0 0 7px #00f5ff' }}>AI SUMMARY</h3>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsOpen(false);
-                }}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto">
-              {loading && (
-                <div className="text-gray-400 text-sm">Generating summary...</div>
-              )}
-              {error && (
-                <div className="text-red-400 text-sm">Error: {error}</div>
-              )}
-              {!loading && !error && (
-                <div className="prose prose-invert prose-sm">
-                  <h4 className="text-white">{item.title}</h4>
-                  <p className="text-gray-300">{summary || 'No summary available.'}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent onClick={(event) => event.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>AI summary</DialogTitle>
+            <DialogDescription>{item.title || 'Article summary'}</DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            {loading && <p className="flex items-center gap-2 text-sm text-muted-foreground"><Spinner />Generating summary…</p>}
+            {error && <Alert variant="destructive"><AlertTitle>Summary failed</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
+            {!loading && !error && <AIResponse summary={summary || 'No summary available.'} />}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
