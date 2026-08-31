@@ -2,7 +2,7 @@
 
 import { sendGTMEvent } from '@next/third-parties/google';
 import Link from 'next/link';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 
 interface LinkButtonProps {
   href: string;
@@ -11,14 +11,18 @@ interface LinkButtonProps {
 
 export default function LinkButton({ href, label }: Readonly<LinkButtonProps>) {
   return (
-    <Link
-      href={href}
-      className={buttonVariants({ variant: 'ghost', size: 'sm' })}
-      onClick={() => {
-        return sendGTMEvent({ event: 'buttonClicked', value: { href, label } });
-      }}
-    >
-      {label}
-    </Link>
+    <Button size="sm" variant="ghost">
+      <Link
+        href={href}
+        onClick={() => {
+          return sendGTMEvent({
+            event: 'buttonClicked',
+            value: { href, label },
+          });
+        }}
+      >
+        {label}
+      </Link>
+    </Button>
   );
 }

@@ -1,7 +1,18 @@
 allowBuilds:
   '@sentry/cli': true
 minimumReleaseAgeExclude:
-  - '@ai-sdk/gateway@4.0.69'
-  - '@ai-sdk/provider-utils@5.0.34'
-  - '@ai-sdk/provider@4.0.9'
-  - ai@7.0.85
+  - '@sentry/browser-utils@10.73.0'
+  - '@sentry/browser@10.73.0'
+  - '@sentry/core@10.73.0'
+  - '@sentry/feedback@10.73.0'
+  - '@sentry/nextjs@10.73.0'
+  - '@sentry/node-core@10.73.0'
+  - '@sentry/node@10.73.0'
+  - '@sentry/opentelemetry@10.73.0'
+  - '@sentry/react@10.73.0'
+  - '@sentry/replay-canvas@10.73.0'
+  - '@sentry/replay@10.73.0'
+  - '@sentry/server-utils@10.73.0'
+  - '@sentry/vercel-edge@10.73.0'
+  - lucide-react@1.38.0
+  - shadcn@4.19.1
