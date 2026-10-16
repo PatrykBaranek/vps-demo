@@ -1,8 +1,7 @@
 import Link from 'next/link';
-import { DatabaseIcon } from 'lucide-react';
 
 import LinkButton from './link-button';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 const links = [
   { href: '/', label: 'Home' },
