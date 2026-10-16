@@ -61,12 +61,19 @@ pnpm build            # production build
 pnpm start            # start production server (non-standalone)
 pnpm start:standalone # copy .env into .next/standalone and run the standalone server
 pnpm typecheck        # tsc --noEmit
+pnpm lint             # oxlint (config in .oxlintrc.json)
 ```
 
-There is no configured lint or test script — do not assume `pnpm lint` or
-`pnpm test` exist. Verify changes with `pnpm typecheck` and `pnpm build`.
+There is no test script — do not assume `pnpm test` exists. Verify changes
+with `pnpm lint`, `pnpm typecheck` and `pnpm build` (the same checks CI runs).
 
-Dependencies are managed with pnpm; only packages listed under `allowBuilds`
+Linting uses **oxlint**, not ESLint: `eslint-config-next` relies on
+typescript-eslint, which does not support TypeScript 7. Lint errors fail CI;
+warnings (e.g. `react/set-state-in-effect`) do not. `components/ui/` is
+excluded because it is shadcn-generated.
+
+Dependencies are managed with pnpm (version pinned via `packageManager` in
+`package.json`); only packages listed under `allowBuilds`
 in `pnpm-workspace.yaml` (currently `@sentry/cli`) may run install scripts.
 Commit `pnpm-lock.yaml` with any dependency change — Docker installs with
 `--frozen-lockfile`.
@@ -122,10 +129,26 @@ Defined in `.env` (not committed; `.env*` is gitignored):
 
 Never print or log the values of these.
 
+## CI
+
+GitHub Actions in `.github/workflows/` (no CD — deployment is manual):
+
+- `ci.yml` — on PRs and pushes to `master`: `pnpm lint`, `pnpm typecheck`,
+  `pnpm build`; `pnpm audit --prod --audit-level=high`; and a Docker image
+  build (not pushed).
+- `codeql.yml` — CodeQL security analysis on PRs, pushes to `master`, and
+  weekly.
+- `.github/dependabot.yml` — weekly updates for npm (minor/patch grouped,
+  3-day cooldown), GitHub Actions, and the Docker base image (Node majors
+  ignored).
+
+Keep CI green: run the same commands locally before pushing.
+
 ## Docker
 
 `docker-compose.yml` runs a single standalone Next.js service (`Dockerfile`,
-multi-stage, Node 24 slim) — no database. `NEXT_PUBLIC_SENTRY_DSN` is forwarded
+multi-stage, Node 24 slim; the base tag is written literally so Dependabot can
+bump it) — no database. `NEXT_PUBLIC_SENTRY_DSN` is forwarded
 as a build arg. The `develop.watch` block lists exactly which paths trigger a
 rebuild — update it if you add new top-level source directories or root
 config files.

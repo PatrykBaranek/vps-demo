@@ -3,12 +3,14 @@
   "name": "vps-demo",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.28.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "start:standalone": "cp .env .next/standalone/ && node .next/standalone/server.js --inspect",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -36,6 +38,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "babel-plugin-react-compiler": "1.0.0",
+    "oxlint": "^1.88.0",
     "shadcn": "^4.22.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2"

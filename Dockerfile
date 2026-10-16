@@ -3,11 +3,10 @@
 # ============================================
 
 # IMPORTANT: Node.js Version Maintenance
-# This Dockerfile uses Node.js 24.13.0-slim, which was the latest LTS version at the time of writing.
-# To ensure security and compatibility, regularly update the NODE_VERSION ARG to the latest LTS version.
-ARG NODE_VERSION=24.13.0-slim
-
-FROM node:${NODE_VERSION} AS base
+# This Dockerfile uses the Node.js 24 LTS slim image. The tag is written
+# literally (not via an ARG) so Dependabot can keep it on the latest 24.x
+# release; move to a newer LTS major by hand.
+FROM node:24.13.0-slim AS base
 
 FROM base AS dependencies
 
