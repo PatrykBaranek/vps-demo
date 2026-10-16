@@ -1,0 +1,63 @@
+name: PR Agent
+
+# AI code review with PR-Agent (https://github.com/the-pr-agent/pr-agent) on a
+# free OpenRouter model. Free models allow 50 requests/day (1,000/day after
+# buying $10 of OpenRouter credits), so only `/review` runs automatically when
+# a PR is opened or marked ready; other tools are triggered by PR comments
+# (`/describe`, `/improve`, `/ask "..."`, `/review` to re-run).
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: pr-agent-${{ github.event.pull_request.number || github.event.issue.number }}-${{ github.event_name }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  pr-agent:
+    name: PR Agent
+    # Skip bots and drafts; only repo owners/members/collaborators can trigger
+    # tools from comments, so outside users cannot burn the free-tier quota.
+    if: >-
+      github.event.sender.type != 'Bot' && (
+        (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+        (github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          startsWith(github.event.comment.body, '/') &&
+          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association))
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
+    steps:
+      - name: Skip when OPENROUTER_KEY secret is not set
+        if: env.OPENROUTER_KEY == ''
+        run: echo "::notice::Add an OPENROUTER_KEY repository secret to enable PR-Agent reviews."
+
+      - name: Run PR-Agent
+        if: env.OPENROUTER_KEY != ''
+        uses: the-pr-agent/pr-agent@v0.47.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENROUTER.KEY: ${{ secrets.OPENROUTER_KEY }}
+          # NVIDIA Nemotron 3 Ultra (free tier). `openrouter/free` picks any
+          # available free model if Nemotron is rate-limited or down.
+          config.model: openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+          config.fallback_models: '["openrouter/free"]'
+          # Required for models not in PR-Agent's built-in list; also caps
+          # the prompt size sent per request.
+          config.custom_model_max_tokens: '128000'
+          github_action_config.auto_review: 'true'
+          github_action_config.auto_describe: 'false'
+          github_action_config.auto_improve: 'false'
+          # The repo has no test suite yet; don't flag every PR for it.
+          pr_reviewer.require_tests_review: 'false'

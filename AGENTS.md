@@ -138,6 +138,11 @@ GitHub Actions in `.github/workflows/` (no CD — deployment is manual):
   build (not pushed).
 - `codeql.yml` — CodeQL security analysis on PRs, pushes to `master`, and
   weekly.
+- `pr-agent.yml` — AI code review with PR-Agent on OpenRouter's free
+  Nemotron 3 Ultra model (needs the `OPENROUTER_KEY` repo secret; skipped
+  without it). Auto-runs `/review` on non-draft PRs; `/describe`, `/improve`,
+  `/ask` run from PR comments by repo collaborators. Free tier: 50
+  requests/day.
 - `.github/dependabot.yml` — weekly updates for npm (minor/patch grouped,
   3-day cooldown), GitHub Actions, and the Docker base image (Node majors
   ignored).
