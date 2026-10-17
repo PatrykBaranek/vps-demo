@@ -8,9 +8,10 @@ A Next.js 16 (App Router) demo app showcasing several integrations: RSS feed
 reading with AI summarization (OpenRouter), local-first data with Dexie (posts,
 bookmarks, cached AI summaries, and a Dexie showcase), Sentry error monitoring,
 and Google Tag Manager. Deployed as a standalone Next.js build behind Docker on
-a VPS (Vercel builds are also supported). All application data lives
-client-side in the browser (IndexedDB) — there is no server database and no
-authentication.
+a VPS (Vercel builds are also supported). Application data lives
+client-side in the browser (IndexedDB). The one exception is AI summaries,
+which are generated once on the server and shared by every user (a JSON file,
+see "Data layer"). There is no server database and no authentication.
 
 ## Stack
 
@@ -90,13 +91,17 @@ Commit `pnpm-lock.yaml` with any dependency change — Docker installs with
   `useLiveQuery` (see `app/posts/`, `app/rss-feed/`, `app/dexie-showcase/`).
 - `app/api/` — Route handlers (`ai-summary`, `rss-fetch`,
   `sentry-example-api`). These stay server-side because they need secrets / a
-  CORS proxy (`ai-summary` streams an OpenRouter summary; `rss-fetch` proxies
-  and parses external RSS URLs; `sentry-example-api` intentionally throws to
-  test Sentry).
+  CORS proxy (`ai-summary` returns a shared, stored summary or streams a new
+  one from OpenRouter; `ai-summary/refresh` is the scheduled job that
+  pre-generates the briefing; `rss-fetch` proxies and parses external RSS
+  URLs; `sentry-example-api` intentionally throws to test Sentry).
 - `components/` — Shared components; `components/ui/` is shadcn-managed
   (add new primitives via the shadcn CLI, not by hand-authoring).
 - `components/navbar/` — Navigation bar (barrel export via `index.ts`)
-- `lib/` — Client/server singletons: `dexie-db.ts`, `app-db.ts`, `utils.ts`.
+- `lib/` — Client/server singletons: `dexie-db.ts`, `app-db.ts`, `utils.ts`;
+  `rss-sources.ts` (default feeds, shared by the Dexie seed and the server);
+  server-only `rss.ts` (feed fetching), `ai-summary.ts` (generation, request
+  dedupe) and `summary-store.ts` (shared summary store).
 - Root Sentry/instrumentation files: `instrumentation.ts` (loads
   `sentry.server.config.ts` / `sentry.edge.config.ts`),
   `instrumentation-client.ts` (browser init). `next.config.ts` is wrapped in
@@ -111,6 +116,13 @@ Commit `pnpm-lock.yaml` with any dependency change — Docker installs with
 - Schema changes go through a new `version(n).stores(...)` call (see
   `lib/app-db.ts`); never edit an existing version's schema
 - Booleans are not indexable in IndexedDB — filter them in JS
+- AI summaries are shared server-side: `lib/summary-store.ts` keeps them in
+  `data/ai-summaries.json` (`SUMMARY_STORE_DIR`; a Docker volume in
+  production), keyed `briefing:{lang}:{category}` / `article:{lang}:{link}`.
+  The server only summarizes its own copy of the default feeds — clients name
+  an article link or category, never send text. The "All categories" briefing
+  is refreshed on a schedule; other summaries are generated on first request
+  and reused. IndexedDB (`aiSummaries`) stays as a per-browser cache in front.
 - No server database or authentication
 
 ## Environment variables
@@ -118,6 +130,14 @@ Commit `pnpm-lock.yaml` with any dependency change — Docker installs with
 Defined in `.env` (not committed; `.env*` is gitignored):
 
 - `OPENROUTER_API_KEY` — used by `app/api/ai-summary`
+- `OPENROUTER_MODEL` — optional, defaults to `openrouter/free` (any free
+  model); set a specific `:free` model ID to pin one
+- `CRON_SECRET` — bearer token for `/api/ai-summary/refresh` (the endpoint
+  returns 503 without it)
+- `SUMMARY_STORE_DIR` — optional, defaults to `./data`
+- `REFRESH_INTERVAL_SECONDS` — optional, interval of the docker-compose
+  `summary-refresh` service (default 10800 = 3h, sized for the free-model
+  daily quota)
 - `GTM_CONTAINER_ID` — Google Tag Manager container (`app/layout.tsx`)
 - `NEXT_PUBLIC_SENTRY_DSN` — browser DSN; must be present at build time (the
   Docker build passes it as a build arg). Optional
@@ -151,10 +171,12 @@ Keep CI green: run the same commands locally before pushing.
 
 ## Docker
 
-`docker-compose.yml` runs a single standalone Next.js service (`Dockerfile`,
+`docker-compose.yml` runs the standalone Next.js service (`Dockerfile`,
 multi-stage, Node 24 slim; the base tag is written literally so Dependabot can
-bump it) — no database. `NEXT_PUBLIC_SENTRY_DSN` is forwarded
-as a build arg. The `develop.watch` block lists exactly which paths trigger a
+bump it) — no database — with the `summary-data` volume mounted at
+`/app/data`, plus a small `summary-refresh` curl container that calls
+`/api/ai-summary/refresh` every `REFRESH_INTERVAL_SECONDS`.
+`NEXT_PUBLIC_SENTRY_DSN` is forwarded as a build arg. The `develop.watch` block lists exactly which paths trigger a
 rebuild — update it if you add new top-level source directories or root
 config files.
 

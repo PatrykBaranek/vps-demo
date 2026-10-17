@@ -208,7 +208,10 @@ export function RssFeedClient() {
                       <BookOpenIcon data-icon="inline-start" />Read article
                     </Button>
                     <BookmarkButton articleLink={item.link || ''} articleTitle={item.title || ''} articleSource={item.source || ''} />
-                    <PerArticleSummary item={item} language={language} />
+                    {item.link && (
+                      // Keyed by language so switching it drops the summary in the old one.
+                      <PerArticleSummary key={language} item={{ title: item.title, link: item.link }} language={language} />
+                    )}
                     {item.link && (
                       <a
                         className={buttonVariants({ variant: 'ghost', size: 'icon-sm' })}
@@ -229,7 +232,7 @@ export function RssFeedClient() {
         </main>
       </div>
 
-      <AIBriefingPanel items={filteredItems} language={language} />
+      <AIBriefingPanel category={selectedCategory} language={language} />
       <ArticleDrawer article={selectedArticle} onClose={() => setSelectedArticle(null)} />
     </>
   );

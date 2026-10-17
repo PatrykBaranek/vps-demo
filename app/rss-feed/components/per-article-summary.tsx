@@ -15,12 +15,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { appDb } from '@/lib/app-db';
 import { AIResponse } from './ai-response';
+import { fetchSummary } from './fetch-summary';
 
 interface PerArticleSummaryProps {
   item: {
     title?: string;
-    contentSnippet?: string;
-    link?: string;
+    link: string;
   };
   language: 'en' | 'pl' | 'de';
 }
@@ -31,10 +31,10 @@ export function PerArticleSummary({ item, language }: PerArticleSummaryProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSummary = async () => {
+  const loadSummary = async () => {
     if (summary || loading) return;
 
-    const cacheKey = `article_${language}_${item.link ?? item.title ?? ''}`;
+    const cacheKey = `article_${language}_${item.link}`;
     const cached = await appDb.aiSummaries.where('cacheKey').equals(cacheKey).first();
     if (cached && Date.now() - cached.createdAt < 86400000) {
       setSummary(cached.summary);
@@ -45,31 +45,10 @@ export function PerArticleSummary({ item, language }: PerArticleSummaryProps) {
     setError(null);
 
     try {
-      const response = await fetch('/api/ai-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: [{
-            title: item.title,
-            contentSnippet: item.contentSnippet,
-          }],
-          language,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch summary');
-
-      const reader = response.body!.getReader();
-      const decoder = new TextDecoder();
-      let fullSummary = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        fullSummary += chunk;
-        setSummary(prev => prev + chunk);
-      }
+      const fullSummary = await fetchSummary(
+        { kind: 'article', language, link: item.link },
+        (chunk) => setSummary(prev => prev + chunk),
+      );
 
       await appDb.aiSummaries.put({ cacheKey, summary: fullSummary, createdAt: Date.now() });
     } catch (caughtError) {
@@ -88,7 +67,7 @@ export function PerArticleSummary({ item, language }: PerArticleSummaryProps) {
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(true);
-          if (!summary) void fetchSummary();
+          if (!summary) void loadSummary();
         }}
         aria-label="Get AI summary"
       >
@@ -102,9 +81,9 @@ export function PerArticleSummary({ item, language }: PerArticleSummaryProps) {
             <DialogDescription>{item.title || 'Article summary'}</DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh]">
-            {loading && <p className="flex items-center gap-2 text-sm text-muted-foreground"><Spinner />Generating summary…</p>}
+            {loading && !summary && <p className="flex items-center gap-2 text-sm text-muted-foreground"><Spinner />Generating summary…</p>}
             {error && <Alert variant="destructive"><AlertTitle>Summary failed</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-            {!loading && !error && <AIResponse summary={summary || 'No summary available.'} />}
+            {!error && (summary || !loading) && <AIResponse summary={summary || 'No summary available.'} isStreaming={loading} />}
           </ScrollArea>
         </DialogContent>
       </Dialog>

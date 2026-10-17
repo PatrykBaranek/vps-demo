@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# shared AI summary store (lib/summary-store.ts)
+/data/
+
 # production
 /build
 

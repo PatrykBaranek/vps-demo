@@ -14,6 +14,9 @@ services:
       PORT: "3000"
     ports:
       - "3000:3000"
+    volumes:
+      # Shared AI summaries (see lib/summary-store.ts) survive redeploys.
+      - summary-data:/app/data
     restart: unless-stopped
     develop:
       watch:
@@ -47,3 +50,35 @@ services:
           path: ./components.json
         - action: rebuild
           path: ./Dockerfile
+
+  # Pre-generates the AI feed briefing in every language. Every 3 hours by
+  # default (3 calls per run) so it stays inside OpenRouter's free-model daily
+  # quota with room left for on-demand article summaries.
+  summary-refresh:
+    image: curlimages/curl:8.11.1
+    container_name: summary-refresh-container
+    depends_on:
+      - next-standalone
+    environment:
+      CRON_SECRET: ${CRON_SECRET-}
+      REFRESH_INTERVAL_SECONDS: ${REFRESH_INTERVAL_SECONDS-10800}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        sleep 30
+        while true; do
+          # Up to 3 attempts per run (the app may still be starting, or a
+          # free model may be briefly rate-limited).
+          for attempt in 1 2 3; do
+            curl -fsS --max-time 600 -X POST \
+              -H "Authorization: Bearer $$CRON_SECRET" \
+              http://next-standalone:3000/api/ai-summary/refresh && break
+            sleep 60
+          done
+          echo
+          sleep "$$REFRESH_INTERVAL_SECONDS"
+        done
+    restart: unless-stopped
+
+volumes:
+  summary-data:

@@ -4,6 +4,7 @@ import React from 'react';
 import { SparklesIcon } from 'lucide-react';
 
 import { AIResponse } from './ai-response';
+import { fetchSummary } from './fetch-summary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { appDb } from '@/lib/app-db';
 
 interface AIBriefingPanelProps {
-  items: Array<{ title?: string; contentSnippet?: string; link?: string }>;
+  category: string;
   language: 'en' | 'pl' | 'de';
 }
 
@@ -31,7 +32,7 @@ const languageLabels: Record<string, string> = {
 };
 
 export function AIBriefingPanel({
-  items,
+  category,
   language,
 }: Readonly<AIBriefingPanelProps>) {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -45,12 +46,7 @@ export function AIBriefingPanel({
       setIsStreaming(true);
       setError(null);
 
-      const links = items
-        .map((i) => i.link)
-        .filter(Boolean)
-        .sort()
-        .join('|');
-      const cacheKey = `briefing_${language}_${links}`;
+      const cacheKey = `briefing_${language}_${category}`;
 
       const cached = await appDb.aiSummaries
         .where('cacheKey')
@@ -63,32 +59,11 @@ export function AIBriefingPanel({
       }
 
       try {
-        const res = await fetch('/api/ai-summary', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items, language }),
+        const fullSummary = await fetchSummary(
+          { kind: 'briefing', language, category },
+          (chunk) => setOutput((prev) => prev + chunk),
           signal,
-        });
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-
-        const reader = res.body!.getReader();
-        const decoder = new TextDecoder();
-        let fullSummary = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-
-          if (done) {
-            break;
-          }
-
-          const chunk = decoder.decode(value);
-          fullSummary += chunk;
-          setOutput((prev) => prev + chunk);
-        }
+        );
 
         await appDb.aiSummaries.put({
           cacheKey,
@@ -112,7 +87,7 @@ export function AIBriefingPanel({
         setIsStreaming(false);
       }
     },
-    [items, language],
+    [category, language],
   );
 
   React.useEffect(() => {
@@ -139,7 +114,8 @@ export function AIBriefingPanel({
           </Badge>
           <SheetTitle>AI feed briefing</SheetTitle>
           <SheetDescription>
-            A summary of the {items.length} currently filtered articles.
+            A summary of the newest articles in{' '}
+            {category === 'all' ? 'all categories' : category}.
           </SheetDescription>
         </SheetHeader>
         <ScrollArea className="min-h-0 flex-1 px-4">

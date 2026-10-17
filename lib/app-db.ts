@@ -1,5 +1,7 @@
 import { Dexie, type EntityTable } from 'dexie';
 
+import { defaultRssSources } from './rss-sources';
+
 export interface Post {
   id: number;
   title: string;
@@ -86,38 +88,10 @@ const postSeeds: Omit<Post, 'id'>[] = [
   },
 ];
 
-const rssSourceSeeds: Omit<RssSource, 'id'>[] = [
-  {
-    name: 'Eurogamer',
-    url: 'https://www.eurogamer.net/feed',
-    description: 'Video game news, reviews, and features',
-    isActive: true,
-  },
-  {
-    name: 'IGN',
-    url: 'https://feeds.ign.com/ign/all',
-    description: 'Video game news, reviews, and walkthroughs',
-    isActive: true,
-  },
-  {
-    name: 'PC Gamer',
-    url: 'https://www.pcgamer.com/rss/',
-    description: 'PC gaming news, reviews, and hardware',
-    isActive: true,
-  },
-  {
-    name: 'GameSpot',
-    url: 'https://www.gamespot.com/feeds/news/',
-    description: 'Game reviews, news, and videos',
-    isActive: true,
-  },
-  {
-    name: 'Kotaku',
-    url: 'https://kotaku.com/rss',
-    description: 'Gaming culture and video game news',
-    isActive: true,
-  },
-];
+const rssSourceSeeds: Omit<RssSource, 'id'>[] = defaultRssSources.map((source) => ({
+  ...source,
+  isActive: true,
+}));
 
 appDb.on('populate', (tx) => {
   tx.table('posts').bulkAdd(postSeeds);

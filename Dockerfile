@@ -94,8 +94,9 @@ ENV HOSTNAME="0.0.0.0"
 # Copy production assets
 COPY --from=builder --chown=node:node /app/public ./public
 
-# Set the correct permission for prerender cache
-RUN mkdir .next && chown node:node .next
+# Set the correct permission for prerender cache and the AI summary store
+# (`data/` is mounted as a volume by docker-compose.yml)
+RUN mkdir .next data && chown node:node .next data
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing

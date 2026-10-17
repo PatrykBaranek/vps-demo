@@ -1,66 +1,49 @@
-import { streamText, createTextStreamResponse, toTextStream } from 'ai';
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { encode } from 'gpt-tokenizer';
+import { NextResponse } from 'next/server';
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  headers: {
-    'X-OpenRouter-Title': 'YourApp',
-    'HTTP-Referer': 'https://yourapp.com',
-  },
-});
+import {
+  articleKey,
+  BRIEFING_MAX_AGE_MS,
+  briefingKey,
+  isSummaryLanguage,
+  summaryResponse,
+} from '@/lib/ai-summary';
+import { getDefaultFeedItems } from '@/lib/rss';
 
-const languageInstructions: Record<string, string> = {
-  en: 'Write the summary in English.',
-  pl: 'Write the summary in Polish (Polski).',
-  de: 'Write the summary in German (Deutsch).',
-};
+type SummaryRequest =
+  | { kind: 'briefing'; language?: unknown; category?: unknown }
+  | { kind: 'article'; language?: unknown; link?: unknown };
 
-const MAX_INPUT_TOKENS = 2048;
-const SYSTEM_OVERHEAD = 256;
-
+// Summaries are shared by every user, so they are only ever generated from
+// the server's own copy of the feed — the client just names what it wants.
 export async function POST(req: Request) {
-  const { items, language } = await req.json() as {
-    items: Array<{ title?: string; contentSnippet?: string }>;
-    language?: string;
-  };
+  const body = (await req.json()) as SummaryRequest;
 
-  // Token-aware truncation: items are already sorted newest-first from the RSS fetch,
-  // so iterating in-order naturally keeps the most recent articles.
-  const itemTexts: string[] = [];
-  let totalTokens = 0;
-  const budget = MAX_INPUT_TOKENS - SYSTEM_OVERHEAD;
+  if (!isSummaryLanguage(body.language)) {
+    return NextResponse.json({ error: 'Unsupported language' }, { status: 400 });
+  }
+  const language = body.language;
 
-  for (const it of items) {
-    const text = `Title: ${it.title}\n${it.contentSnippet ? `${it.contentSnippet}\n` : ''}`;
-    const tokens = encode(text).length;
-    if (totalTokens + tokens > budget && itemTexts.length > 0) break;
-    itemTexts.push(text);
-    totalTokens += tokens;
+  if (body.kind === 'briefing') {
+    const category = typeof body.category === 'string' && body.category ? body.category : 'all';
+    const feed = await getDefaultFeedItems();
+    const items =
+      category === 'all' ? feed : feed.filter((item) => item.categories?.includes(category));
+    if (items.length === 0) {
+      return NextResponse.json({ error: 'No articles to summarize' }, { status: 404 });
+    }
+    return summaryResponse(briefingKey(language, category), items, language, BRIEFING_MAX_AGE_MS);
   }
 
-  const prompt = itemTexts.join('\n\n');
+  if (body.kind === 'article' && typeof body.link === 'string' && body.link) {
+    const link = body.link;
+    let item = (await getDefaultFeedItems()).find((it) => it.link === link);
+    // The article may be newer than the server's cached copy of the feed.
+    item ??= (await getDefaultFeedItems({ maxAgeMs: 60 * 1000 })).find((it) => it.link === link);
+    if (!item) {
+      return NextResponse.json({ error: 'Article not found in the feed' }, { status: 404 });
+    }
+    return summaryResponse(articleKey(language, link), [item], language);
+  }
 
-  const langInstruction = languageInstructions[language ?? 'pl'] ?? languageInstructions.pl;
-
-  const response = streamText({
-    model: openrouter.chat('openrouter/free'),
-    system: [
-      'You are a professional news editor.',
-      'Summarize the provided RSS feed articles into a concise briefing grouped by theme.',
-      'Use markdown with bold section headers and bullet points.',
-      'Write in a neutral, editorial tone.',
-      'Do not address the reader. Do not include greetings, sign-offs, offers to help, or meta-commentary about the summary.',
-      langInstruction,
-      'Output only the summary itself — nothing before or after it.',
-    ].join(' '),
-    prompt,
-  });
-
-  return createTextStreamResponse({
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-    },
-    stream: toTextStream({ stream: response.stream }),
-  });
+  return NextResponse.json({ error: 'Invalid summary request' }, { status: 400 });
 }

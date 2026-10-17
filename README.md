@@ -35,6 +35,30 @@ For readable production stack traces, provide `SENTRY_ORG`, `SENTRY_PROJECT`, an
 `SENTRY_AUTH_TOKEN` during the production build to upload source maps. Source-map upload
 is disabled automatically when `SENTRY_AUTH_TOKEN` is not set.
 
+## AI summaries
+
+The RSS page's AI summaries are generated on the server and shared by all
+users, so each one costs one model call no matter how many people open it.
+Set these in `.env`:
+
+```dotenv
+OPENROUTER_API_KEY=your-key
+# Long random string; protects the refresh endpoint
+CRON_SECRET=your-secret
+# Optional: pin a specific free model instead of openrouter/free
+# OPENROUTER_MODEL=some/model:free
+```
+
+`docker compose up` also starts `summary-refresh`, which pre-generates the
+"All categories" briefing in English, Polish and German every 3 hours
+(`REFRESH_INTERVAL_SECONDS`). Article summaries and per-category briefings are
+generated the first time someone asks and then reused. Everything is stored in
+the `summary-data` volume. Without Docker, run the refresh from any scheduler:
+
+```bash
+curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://your-host/api/ai-summary/refresh
+```
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
