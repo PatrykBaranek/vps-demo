@@ -6,7 +6,7 @@
 # This Dockerfile uses the Node.js 24 LTS slim image. The tag is written
 # literally (not via an ARG) so Dependabot can keep it on the latest 24.x
 # release; move to a newer LTS major by hand.
-FROM node:24.21.0-slim AS base
+FROM node:24.22.1-slim AS base
 
 FROM base AS dependencies
 
